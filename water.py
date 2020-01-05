@@ -555,17 +555,93 @@ class MediaMeter:
         finally:
             print("The SQLite connection is closed")
 
-    def drop_databases_payments(self):
-        dropTableStatement = "DROP TABLE payments"
-        self.cursor.execute(dropTableStatement)
+    def modify_databases(self):
+        # wybierz tabelę do modyfikacji
+        choice1 = input('Zmodyfikuj:\n1.Stany liczników.\n2.Faktury.\n3.Rozliczenia\n4.Wyjście.\n')
+        # wyjście
+        if choice1 == '4':
+            choices()
 
-    def drop_databases_water(self):
-        dropTableStatement = "DROP TABLE water"
-        self.cursor.execute(dropTableStatement)
+        # wybierz rodzaj operacji
+        choice2 = input('1.Zmodyfikuj wybrany wpis.\n2. Skasuj bazę danych.\n3.Wyjście.\n')
+        if choice2 == '3':
+            choices()
 
-    def drop_databases_water_invoice(self):
-        dropTableStatement = "DROP TABLE water_invoice"
-        self.cursor.execute(dropTableStatement)
+        # wybrano modyfikację pojedynczego wpisu
+        elif choice2 == '1':
+            # wybierz wpis do zmiany lub wpis do usunięcia
+            choice3 = input('1.Zmiana wpisu.\n2.Usunięcie wpisu.\n3.Wyjście.\n')
+            # wyjście
+            if choice3 == '3':
+                choices()
+            # zmiana STANU LICZNIKA w pojedynczym wpisie
+            elif choice3 == '1' and choice1 == '1':
+                sqlite_choice_query = """ALTER"""
+            # zmiana FAKTURY w pojedynczym wpisie
+            elif choice3 == '1' and choice1 == '2':
+                pass
+            # zmiana ROZLICZENIA w pojedynczym wpisie
+            elif choice3 == '1' and choice1 == '3':
+                while True:
+                    data_tuple = input('Wpisz id wpisu, w którym chcesz dokonać zmiany.')
+                    if not data_tuple.isalpha():
+                        int(data_tuple)
+                        print(data_tuple)
+                        sqlite_choice_query = "UPDATE payments SET ? = ? WHERE id = ?"
+                        break
+
+            # usuwa pojedynczy wpis ze STANU LICZNIKA
+            elif choice3 == '2' and choice1 == '1':
+                while True:
+                    data_tuple = input('Wpisz id wpisu, który chcesz skasować.')
+                    if not data_tuple.isalpha():
+                        int(data_tuple)
+                sqlite_choice_query = """DELETE FROM water WHERE id = ?"""
+
+            # usuwa pojedynczy wpis z FAKTURY
+            elif choice3 == '2' and choice1 == '2':
+                while True:
+                    data_tuple = input('Wpisz id wpisu, który chcesz skasować.')
+                    if not data_tuple.isalpha():
+                        int(data_tuple)
+                sqlite_choice_query = """DELETE FROM water_invoice WHERE id = ?"""
+
+            # usuwa pojedynczy wpis z ROZLICZENIA
+            elif choice3 == '2' and choice1 == '3':
+                while True:
+                    data_tuple = input('Wpisz id wpisu, który chcesz skasować.')
+                    if not data_tuple.isalpha():
+                        int(data_tuple)
+                sqlite_choice_query = """DELETE FROM payments WHERE id = ?"""
+
+        # skasuj wybraną bazę danych
+        elif choice2 == '2':
+            confirmation = input('Jesteś pewny, że chcesz skasować wybraną bazę danych? t/n')
+            while True:
+                if confirmation == 'n' or 'N':
+                    choices()
+                else:
+                    if choice1 == '1':
+                        sqlite_choice_query = """DROP TABLE water"""
+                        self.cursor.execute(sqlite_choice_query)
+                        break
+                    elif choice1 == '2':
+                        sqlite_choice_query = """DROP TABLE water_invoice"""
+                        self.cursor.execute(sqlite_choice_query)
+                        break
+                    elif choice1 == '3':
+                        sqlite_choice_query = """DROP TABLE payments"""
+                        self.cursor.execute(sqlite_choice_query)
+                        break
+
+        # wyjscie
+        elif choice2 == '3':
+            choices()
+
+        self.cursor.execute(sqlite_choice_query, (data_tuple,))
+
+        # sqlite_choice_query = """SELECT * FROM ? WHERE id = ?"""
+        # data_tuple = ()
 
 
 def choices():
@@ -581,10 +657,8 @@ def choices():
               '6.Wpisz ROZLICZENIE MEDIÓW.\n'
               '7.Wydruk rozliczenia dla najemców.\n'
               '8.Powierdzenie opłacenia FAKTURY.\n'
-              '9.ZAKOŃCZ PROGRAM.\n'
-              '10.DROP DATABASES - payments.'
-              '11.DROP DATABASES - water.'
-              '12.DROP DATABASES - water_invoice.'
+              '9.Dokonaj zmian we wpisach.\n'
+              '10.ZAKOŃCZ PROGRAM.\n'
               )
 
         choice = input()
@@ -605,14 +679,11 @@ def choices():
         elif choice == '8':
             water.potwierdzenie_oplacenia_faktury()
         elif choice == '9':
-            sqlite3.connect("water.db").close()
+            water.modify_databases()
             sys.exit()
         elif choice == '10':
-            water.drop_databases_payments()
-        elif choice == '11':
-            water.drop_databases_water()
-        elif choice == '12':
-            water.drop_databases_water_invoice()
+            sqlite3.connect("water.db").close()
+            sys.exit()
         else:
             continue
 
